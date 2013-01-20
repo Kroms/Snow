@@ -1,10 +1,7 @@
 import pygame
 import random
 
-# Swivelling idea
-# Max: On each frame, rotate it a little around the point where it was some length of time ago.
-# Swap directions after a certain length of time.
- 
+# Establish colours
 white = (255, 255, 255)
 black = (0, 0, 0)
 navy = (15, 20, 30)
@@ -17,7 +14,7 @@ height = 500
 size = [width, height]
 screen = pygame.display.set_mode(size)
  
-pygame.display.set_caption("Tried to check if I kept the caption, did you? Ba. Haha. Bahaha. Outsmarted!")
+pygame.display.set_caption("Let it snow, let it snow, let it snow. I'm craving ice cream. Are you?")
 
 # Variables
 flakes_amount = 200
@@ -27,7 +24,7 @@ num_changed = 0
 
 # Flag for program
 done = False
-#wind_change = False
+
  
 # Used to manage how fast the screen updates
 clock=pygame.time.Clock()
@@ -56,18 +53,10 @@ def letItSnow(firstSnow, lastSnow, x_wind, y_wind):
     for snows in range(firstSnow, lastSnow):
         pygame.draw.circle(screen, color_list[snows], snow_list[snows], size_list[snows])
 
-        #TO DO: add an upper limit, loop up to it using flag
         global num_changed
         if time_since > (10000 + (10000 * num_changed)) :
             x_wind = 100
-            #x_change = random.randint(-3,4)
-            #y_change = random.randint(-4,5)
-            #x_wind += x_change
-            #y_wind += y_change
-           # TO DO: if wind goes up to a certain value,
-           # loop down to a smaller one
-
-           
+                  
         # Drifting
         snow_list[snows][0] += x_wind
         snow_list[snows][1] += y_wind
@@ -94,7 +83,7 @@ while done==False:
         if event.type == pygame.QUIT: # If user clicked close
             done=True # Flag that we are done so we exit this loop 
  
-    # Lessdraw
+    # Let us draw
     screen.fill(navy)
 
     # Time
@@ -111,7 +100,7 @@ while done==False:
     letItSnow(0, snow_half, 1, 2)
     letItSnow(snow_half, len(snow_list), 4, 4)
 
-    # Go ahead and update the screen with what we've drawn.
+    # Update the screen
     pygame.display.flip()
  
     # Limit to 24 frames per second
