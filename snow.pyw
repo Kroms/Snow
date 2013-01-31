@@ -18,7 +18,7 @@ HEIGHT = 600
 # this margin, they begin to fade away.
 EDGE_MARGIN = 40
 # The total number of snowflake particles.
-TOTAL_FLAKES = 1000
+TOTAL_FLAKES = 3000
 # The number of particle layers. The snowflakes of each layer in the set is one
 # pixel larger in radius. Earlier layers move slower, to create the illusion of
 # perspective.
@@ -132,16 +132,15 @@ class Snowflake(object):
         if alpha == 0:
             return
         elif alpha == 1:
+            self.surface.set_alpha(255, pygame.RLEACCEL)
             src = self.surface
         else:
             src = pygame.Surface((sprite_radius * 2, sprite_radius * 2))
-            for x in range(sprite_radius * 2):
-                for y in range(sprite_radius * 2):
-                    pixel = self.surface.get_at((x, y))
-                    pixel = [int(i * alpha) for i in pixel]
-                    src.set_at((x, y), pixel)
-        corner = (int(self.x * 2 - sprite_radius), int(self.y * 2 - sprite_radius))
-        surface.blit(src, corner, None, pygame.BLEND_RGB_ADD)
+            self.surface.set_alpha(int(alpha * 255), pygame.RLEACCEL)
+            src.blit(self.surface, (0, 0))
+        corner = (int(self.x * 2 - sprite_radius),
+                  int(self.y * 2 - sprite_radius))
+        surface.blit(src, corner, None, pygame.BLEND_ADD)
         if src != self.surface:
             del src
 
