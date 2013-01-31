@@ -2,15 +2,14 @@
 
 import math
 import pygame
-import pygame.gfxdraw
 import random
 
 # The RGB color of the background.
 BACKGROUND_COLOR = (18, 26, 40)
 # The filename of an optional background image. Can be None.
 BACKGROUND_IMAGE = 'bg.png'
-# The base color of the snowflakes.
-FOREGROUND_COLOR = (175, 184, 195)
+# The RGB base color of the snowflakes.
+FOREGROUND_COLOR = (80, 79, 90)
 # The window width.
 WIDTH = 1200
 # The window height.
@@ -19,17 +18,17 @@ HEIGHT = 600
 # this margin, they begin to fade away.
 EDGE_MARGIN = 40
 # The total number of snowflake particles.
-TOTAL_FLAKES = 400
+TOTAL_FLAKES = 4000
 # The number of particle layers. The snowflakes of each layer in the set is one
 # pixel larger in radius. Earlier layers move slower, to create the illusion of
 # perspective.
-LAYERS = 4
+LAYERS = 3
 # The base X  and Y speed of the snowflakes.
 SPEED_BASE_X_MS = 0.02
-SPEED_BASE_Y_MS = 0.07
+SPEED_BASE_Y_MS = 0.05
 # The maximum per-frame random variation of X and Y speeds of the snowflakes.
 SPEED_VARIATION_X_MS = 0.01
-SPEED_VARIATION_Y_MS = 0.02
+SPEED_VARIATION_Y_MS = 0.04
 # The minimum number of milliseconds a snowflake must move in the same
 # horizontal direction before switching.
 DIRECTION_CHANGE_DELAY = 2000
@@ -37,7 +36,7 @@ DIRECTION_CHANGE_DELAY = 2000
 # the screen for longer than its lifetime respawns.
 LIFETIME_BASE_MS = 4000
 # The maximum random variation of the lifetime, in milliseconds.
-LIFETIME_VARIATION_MS = 6000
+LIFETIME_VARIATION_MS = 9000
 # The number of milliseconds before death during which the snowflake fades out.
 LIFETIME_FADE_THRESHOLD_MS = 750
 
@@ -59,6 +58,7 @@ class Snowflake(object):
         self.color = color
         self.alpha = opacity
         self.speed = speed
+        self.surface = self._renderSprite()
         self.reposition()
 
     def move(self, delta_time):
@@ -90,37 +90,59 @@ class Snowflake(object):
     def reposition(self, allow_inside=True):
         self.x = random.randrange(WIDTH)
         if allow_inside:
-            self.y = random.randrange(-self.size, HEIGHT)
+            self.y = random.randrange(-self.size * 2, HEIGHT)
         else:
-            self.y = -self.size
+            self.y = -random.randrange(self.size * 2)
 
     def draw(self, surface):
+        # Fade out at bottom edge and before death.
+        edge_distance = max(0, min(EDGE_MARGIN, HEIGHT - self.y))
+        edge_fade = float(edge_distance) / EDGE_MARGIN
+        life_fade = min(1, float(self.lifetime) / LIFETIME_FADE_THRESHOLD_MS)
+        alpha = min(life_fade, edge_fade)
+
+        self._blit(surface, alpha)
+
+    def _renderSprite(self):
         radius = self.size
+        surface = pygame.Surface((radius * 2, radius * 2))
         # Walk all pixels in the square enclosing the circle and calculate the
-        # correctly blended color. Very inefficient, but pretty.
+        # correctly blended color.
+        surface.lock()
         for dx in range(-radius, radius + 1):
             for dy in range(-radius, radius + 1):
                 self._drawPixel(surface, dx, dy)
-
+        surface.unlock()
+        return surface
+        
     def _drawPixel(self, surface, dx, dy):
         radius = self.size
         # Calculate distance from the pixel (fit to grid) to the center.
-        y = int(self.y + dy)
-        x = int(self.x + dx)
-        dx = x - self.x
-        dy = y - self.y
         unit_distance = math.hypot(dx, dy) / radius
-        if unit_distance <= 1:
+        if unit_distance < 1:
             # Fade out outwards from the center.
             alpha = self.alpha * (1 - unit_distance)
-            # Fade out at bottom edge and before life ends.
-            edge_distance = max(0, min(EDGE_MARGIN, HEIGHT - y))
-            edge_fade = float(edge_distance) / EDGE_MARGIN
-            life_fade = min(1, float(self.lifetime) /
-                                     LIFETIME_FADE_THRESHOLD_MS)
-            alpha *= min(life_fade, edge_fade)
             # Draw pixel.
-            pygame.gfxdraw.pixel(surface, x, y, self.color + (alpha * 255,))
+            x = radius + dx
+            y = radius + dy
+            surface.set_at((x, y), [ch * alpha for ch in self.color])
+        
+    def _blit(self, surface, alpha):
+        if alpha == 0:
+            return
+        elif alpha == 1:
+            src = self.surface
+        else:
+            src = pygame.Surface((self.size * 2, self.size * 2))
+            for x in range(self.size * 2):
+                for y in range(self.size * 2):
+                    pixel = self.surface.get_at((x, y))
+                    pixel = [int(i * alpha) for i in pixel]
+                    src.set_at((x, y), pixel)
+        corner = (int(self.x - self.size), int(self.y - self.size))
+        surface.blit(src, corner, None, pygame.BLEND_RGB_ADD)
+        if src != self.surface:
+            del src
 
 
 def run_game():
@@ -174,9 +196,13 @@ def run_game():
         pygame.display.flip()
 
 
-if __name__ == '__main__':
+def main():
     pygame.init()
     try:
         run_game()
     finally:
         pygame.quit()
+
+
+if __name__ == '__main__':
+    main()
