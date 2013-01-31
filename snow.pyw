@@ -7,7 +7,9 @@ import random
 # The RGB color of the background.
 BACKGROUND_COLOR = (18, 26, 40)
 # The filename of an optional background image. Can be None.
-BACKGROUND_IMAGE = 'bg.png'
+BACKGROUND_IMAGE = None
+# The filename of an optional foreground image. Can be None.
+FOREGROUND_IMAGE = 'fg.png'
 # The RGB base color of the snowflakes.
 FOREGROUND_COLOR = (80, 79, 90)
 # The window width.
@@ -23,19 +25,20 @@ TOTAL_FLAKES = 5000
 # pixel larger in radius. Earlier layers move slower, to create the illusion of
 # perspective.
 LAYERS = 3
-# The base X  and Y speed of the snowflakes.
+# The base X  and Y speed of the snowflakes, in pixels per millisecond.
 SPEED_BASE_X_MS = 0.02
-SPEED_BASE_Y_MS = 0.05
-# The maximum per-frame random variation of X and Y speeds of the snowflakes.
+SPEED_BASE_Y_MS = 0.04
+# The maximum per-frame random variation of X and Y speeds of the snowflakes,
+# in pixels per millisecond.
 SPEED_VARIATION_X_MS = 0.01
-SPEED_VARIATION_Y_MS = 0.04
-# The minimum number of milliseconds a snowflake must move in the same
-# horizontal direction before switching.
+SPEED_VARIATION_Y_MS = 0.03
+# The number of milliseconds a snowflake must move in the same horizontal
+# direction before switching.
 DIRECTION_CHANGE_DELAY = 2000
 # The minimum lifetime of a snowflake in milliseconds. A snowflake that stays on
 # the screen for longer than its lifetime respawns.
 LIFETIME_BASE_MS = 4000
-# The maximum random variation of the lifetime, in milliseconds.
+# The maximum random variation of the snowflake lifetime, in milliseconds.
 LIFETIME_VARIATION_MS = 9000
 # The number of milliseconds before death during which the snowflake fades out.
 LIFETIME_FADE_THRESHOLD_MS = 750
@@ -117,7 +120,7 @@ class Snowflake(object):
         
     def _drawPixel(self, surface, dx, dy):
         sprite_radius = self.size * 2
-        # Calculate distance from the pixel (fit to grid) to the center.
+        # Calculate distance from the pixel to the center.
         unit_distance = math.hypot(dx, dy) / sprite_radius
         if unit_distance < 1:
             # Fade out outwards from the center.
@@ -126,6 +129,7 @@ class Snowflake(object):
             x = sprite_radius + dx
             y = sprite_radius + dy
             surface.set_at((x, y), [ch * alpha for ch in self.color])
+            
         
     def _blit(self, surface, alpha):
         sprite_radius = self.size * 2
@@ -146,14 +150,20 @@ class Snowflake(object):
 
 
 def run_game():
+    pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF, 32)
+    
     # Initialize the canvas and background if needed.
+    bg_image = None
+    fg_image = None
+    global WIDTH, HEIGHT
     if BACKGROUND_IMAGE:
-        raw_image = pygame.image.load(BACKGROUND_IMAGE).convert(32)
+        raw_image = pygame.image.load(BACKGROUND_IMAGE).convert_alpha()
         bg_image = pygame.transform.scale2x(raw_image)
-        global WIDTH, HEIGHT
         WIDTH, HEIGHT = raw_image.get_rect()[2:]
-    else:
-        bg_image = None
+    if FOREGROUND_IMAGE:
+        raw_image = pygame.image.load(FOREGROUND_IMAGE).convert_alpha()
+        fg_image = pygame.transform.scale2x(raw_image)
+        WIDTH, HEIGHT = raw_image.get_rect()[2:]
     canvas = pygame.Surface((WIDTH * 2, HEIGHT * 2))
 
     # Initialize the window.
@@ -195,6 +205,8 @@ def run_game():
             canvas.blit(bg_image, bg_image.get_rect())
         for snowflake in snowflakes:
             snowflake.draw(canvas)
+        if fg_image:
+            canvas.blit(fg_image, fg_image.get_rect())
         pygame.transform.smoothscale(canvas, (WIDTH, HEIGHT), screen)
 
         # Next frame.
