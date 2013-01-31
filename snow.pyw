@@ -18,7 +18,7 @@ HEIGHT = 600
 # this margin, they begin to fade away.
 EDGE_MARGIN = 40
 # The total number of snowflake particles.
-TOTAL_FLAKES = 4000
+TOTAL_FLAKES = 1000
 # The number of particle layers. The snowflakes of each layer in the set is one
 # pixel larger in radius. Earlier layers move slower, to create the illusion of
 # perspective.
@@ -104,42 +104,43 @@ class Snowflake(object):
         self._blit(surface, alpha)
 
     def _renderSprite(self):
-        radius = self.size
-        surface = pygame.Surface((radius * 2, radius * 2))
+        sprite_radius = self.size * 2
+        surface = pygame.Surface((sprite_radius * 2, sprite_radius * 2))
         # Walk all pixels in the square enclosing the circle and calculate the
         # correctly blended color.
         surface.lock()
-        for dx in range(-radius, radius + 1):
-            for dy in range(-radius, radius + 1):
+        for dx in range(-sprite_radius, sprite_radius + 1):
+            for dy in range(-sprite_radius, sprite_radius + 1):
                 self._drawPixel(surface, dx, dy)
         surface.unlock()
         return surface
         
     def _drawPixel(self, surface, dx, dy):
-        radius = self.size
+        sprite_radius = self.size * 2
         # Calculate distance from the pixel (fit to grid) to the center.
-        unit_distance = math.hypot(dx, dy) / radius
+        unit_distance = math.hypot(dx, dy) / sprite_radius
         if unit_distance < 1:
             # Fade out outwards from the center.
             alpha = self.alpha * (1 - unit_distance)
             # Draw pixel.
-            x = radius + dx
-            y = radius + dy
+            x = sprite_radius + dx
+            y = sprite_radius + dy
             surface.set_at((x, y), [ch * alpha for ch in self.color])
         
     def _blit(self, surface, alpha):
+        sprite_radius = self.size * 2
         if alpha == 0:
             return
         elif alpha == 1:
             src = self.surface
         else:
-            src = pygame.Surface((self.size * 2, self.size * 2))
-            for x in range(self.size * 2):
-                for y in range(self.size * 2):
+            src = pygame.Surface((sprite_radius * 2, sprite_radius * 2))
+            for x in range(sprite_radius * 2):
+                for y in range(sprite_radius * 2):
                     pixel = self.surface.get_at((x, y))
                     pixel = [int(i * alpha) for i in pixel]
                     src.set_at((x, y), pixel)
-        corner = (int(self.x - self.size), int(self.y - self.size))
+        corner = (int(self.x * 2 - sprite_radius), int(self.y * 2 - sprite_radius))
         surface.blit(src, corner, None, pygame.BLEND_RGB_ADD)
         if src != self.surface:
             del src
@@ -167,9 +168,11 @@ def run_game():
                               opacity=opacity)
         snowflakes.append(snowflake)
 
-    # Initialize the background if needed.
+    # Initialize the canvas and background if needed.
+    canvas = pygame.Surface((WIDTH * 2, HEIGHT * 2))
     if BACKGROUND_IMAGE:
-        bg_image = pygame.image.load(BACKGROUND_IMAGE).convert()
+        bg_image = pygame.transform.scale2x(
+            pygame.image.load(BACKGROUND_IMAGE).convert())
     else:
         bg_image = None
 
@@ -186,11 +189,12 @@ def run_game():
             snowflake.move(delta_time)
 
         # Draw.
-        screen.fill(BACKGROUND_COLOR)
+        canvas.fill(BACKGROUND_COLOR)
         if bg_image:
-            screen.blit(bg_image, bg_image.get_rect())
+            canvas.blit(bg_image, bg_image.get_rect())
         for snowflake in snowflakes:
-            snowflake.draw(screen)
+            snowflake.draw(canvas)
+        pygame.transform.smoothscale(canvas,(WIDTH, HEIGHT), screen)
 
         # Next frame.
         pygame.display.flip()
