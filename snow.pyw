@@ -147,12 +147,14 @@ class Snowflake(object):
 
 def run_game():
     # Initialize the canvas and background if needed.
-    canvas = pygame.Surface((WIDTH * 2, HEIGHT * 2))
     if BACKGROUND_IMAGE:
         raw_image = pygame.image.load(BACKGROUND_IMAGE).convert(32)
         bg_image = pygame.transform.scale2x(raw_image)
+        global WIDTH, HEIGHT
+        WIDTH, HEIGHT = raw_image.get_rect()[2:]
     else:
         bg_image = None
+    canvas = pygame.Surface((WIDTH * 2, HEIGHT * 2))
 
     # Initialize the window.
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF, 32)
