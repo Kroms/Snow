@@ -18,7 +18,7 @@ HEIGHT = 600
 # this margin, they begin to fade away.
 EDGE_MARGIN = 40
 # The total number of snowflake particles.
-TOTAL_FLAKES = 3000
+TOTAL_FLAKES = 5000
 # The number of particle layers. The snowflakes of each layer in the set is one
 # pixel larger in radius. Earlier layers move slower, to create the illusion of
 # perspective.
@@ -146,12 +146,17 @@ class Snowflake(object):
 
 
 def run_game():
-    # Initialize the window.
-    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF)
-    pygame.display.set_caption('Snow, with a touch of Shinkai')
+    # Initialize the canvas and background if needed.
+    canvas = pygame.Surface((WIDTH * 2, HEIGHT * 2))
+    if BACKGROUND_IMAGE:
+        raw_image = pygame.image.load(BACKGROUND_IMAGE).convert(32)
+        bg_image = pygame.transform.scale2x(raw_image)
+    else:
+        bg_image = None
 
-    # Create a clock to keep track of animation speed.
-    clock = pygame.time.Clock()
+    # Initialize the window.
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF, 32)
+    pygame.display.set_caption('Snow, with a touch of Shinkai')
 
     # Initialize the flakes.
     snowflakes = []
@@ -167,13 +172,8 @@ def run_game():
                               opacity=opacity)
         snowflakes.append(snowflake)
 
-    # Initialize the canvas and background if needed.
-    canvas = pygame.Surface((WIDTH * 2, HEIGHT * 2))
-    if BACKGROUND_IMAGE:
-        bg_image = pygame.transform.scale2x(
-            pygame.image.load(BACKGROUND_IMAGE).convert())
-    else:
-        bg_image = None
+    # Create a clock to keep track of animation speed.
+    clock = pygame.time.Clock()
 
     # Main loop.
     while True:
@@ -193,7 +193,7 @@ def run_game():
             canvas.blit(bg_image, bg_image.get_rect())
         for snowflake in snowflakes:
             snowflake.draw(canvas)
-        pygame.transform.smoothscale(canvas,(WIDTH, HEIGHT), screen)
+        pygame.transform.smoothscale(canvas, (WIDTH, HEIGHT), screen)
 
         # Next frame.
         pygame.display.flip()
