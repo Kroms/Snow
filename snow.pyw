@@ -1,6 +1,7 @@
 """Renders a gentle snowfall animation."""
 
 import math
+import os
 import pygame
 import random
 
@@ -217,14 +218,14 @@ def run_game():
         # Next frame.
         pygame.display.flip()
 
-
 def main():
+    os.environ['SDL_VIDEO_CENTERED'] = '1'
     pygame.init()
+
     try:
         run_game()
     finally:
         pygame.quit()
-
 
 if __name__ == '__main__':
     main()
