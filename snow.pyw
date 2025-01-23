@@ -112,11 +112,14 @@ class Snowflake(object):
         # Walk all pixels in the square enclosing the circle and calculate the
         # correctly blended color.
         surface.lock()
+        # This goes over each pixel of the snowflake
         for dx in range(-sprite_radius, sprite_radius + 1):
             for dy in range(-sprite_radius, sprite_radius + 1):
                 self._drawPixel(surface, dx, dy)
         surface.unlock()
+        # This surface is the one the snowflake is blitted from.
         return surface
+    
         
     def _drawPixel(self, surface, dx, dy):
         sprite_radius = self.size * 2
@@ -150,12 +153,13 @@ class Snowflake(object):
 
 
 def run_game():
+    global WIDTH, HEIGHT
     pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF, 32)
     
     # Initialize the canvas and background if needed.
     bg_image = None
     fg_image = None
-    global WIDTH, HEIGHT
+
     if BACKGROUND_IMAGE:
         raw_image = pygame.image.load(BACKGROUND_IMAGE).convert_alpha()
         bg_image = pygame.transform.scale2x(raw_image)
@@ -168,7 +172,7 @@ def run_game():
 
     # Initialize the window.
     screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.DOUBLEBUF, 32)
-    pygame.display.set_caption('Snow, with a touch of Shinkai')
+    pygame.display.set_caption('Snow, with a touch of Shinkai and a whole lot of Max')
 
     # Initialize the flakes.
     snowflakes = []
@@ -201,6 +205,7 @@ def run_game():
 
         # Draw.
         canvas.fill(BACKGROUND_COLOR)
+        
         if bg_image:
             canvas.blit(bg_image, bg_image.get_rect())
         for snowflake in snowflakes:
